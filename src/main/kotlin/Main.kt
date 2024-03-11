@@ -1,8 +1,13 @@
 import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.ClickableText
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -10,6 +15,9 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
@@ -21,11 +29,13 @@ import org.json.JSONArray
 import org.json.JSONObject
 import java.awt.Desktop
 import java.awt.Toolkit
-import java.io.BufferedReader
-import java.io.InputStreamReader
 import java.net.URI
 import java.util.*
 
+/**
+ * This is the main Composable function for the application.
+ * It contains the UI elements and their state.
+ */
 @Composable
 @Preview
 fun App() {
@@ -36,8 +46,7 @@ fun App() {
     val authServerInfo by remember { mutableStateOf("Enter the URL of the auth endpoint") }
     val methodDescription by remember { mutableStateOf("POST, PUT, DELETE are experimental - use with care") }
     val authorNote by remember { mutableStateOf("https://github.com/andakawa") }
-    val authorUrl = "https://github.com/andakawa" // Replace with the actual URL
-
+    val authorUrl = "https://github.com/andakawa"
 
     var inputId by remember { mutableStateOf("") }
     var inputSecret by remember { mutableStateOf("") }
@@ -61,6 +70,8 @@ fun App() {
     val inputHistory by remember { mutableStateOf(mutableListOf<List<String>>()) }
     var dropdownExpanded by remember { mutableStateOf(false) }
 
+    var passwordVisible by rememberSaveable { mutableStateOf(false) }
+
     val darkThemeColors = darkColors(
         primary = Color(0xFFFFA500),
         primaryVariant = Color(0xFF3700B3),
@@ -69,9 +80,13 @@ fun App() {
     )
 
     MaterialTheme(colors = darkThemeColors) {
+
         Surface(color = Color.DarkGray) {
+
             Box(modifier = Modifier.fillMaxSize()) {
+
                 Column {
+
                     Column {
 
                         Row(
@@ -80,6 +95,7 @@ fun App() {
                         ) {
 
                             Column {
+
                                 Text(
                                     headline,
                                     style = TextStyle(fontSize = 3.em, fontWeight = FontWeight.Bold),
@@ -134,7 +150,6 @@ fun App() {
                             }
 
                         }
-
                     }
 
                     Text(intro, modifier = Modifier.padding(32.dp, 0.dp, 0.dp, 0.dp), color = Color.White)
@@ -144,21 +159,33 @@ fun App() {
                         onValueChange = { inputId = it },
                         label = { Text("Client ID") },
                         modifier = Modifier.padding(32.dp, 12.dp, 32.dp, 0.dp).fillMaxWidth(),
-                        colors = TextFieldDefaults.textFieldColors(textColor = Color.White)
+                        colors = TextFieldDefaults.textFieldColors(textColor = Color.White),
+                        singleLine = true
                     )
                     TextField(
                         value = inputSecret,
                         onValueChange = { inputSecret = it },
                         label = { Text("Client Secret") },
                         modifier = Modifier.padding(32.dp, 12.dp, 32.dp, 0.dp).fillMaxWidth(),
-                        colors = TextFieldDefaults.textFieldColors(textColor = Color.White)
+                        colors = TextFieldDefaults.textFieldColors(textColor = Color.White),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                        singleLine = true,
+                        visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                        trailingIcon = {
+                            val image =
+                                Icons.Default.VisibilityOff.takeIf { passwordVisible } ?: Icons.Filled.Visibility
+                            IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                                Icon(imageVector = image, contentDescription = null)
+                            }
+                        }
                     )
                     TextField(
                         value = inputScope,
                         onValueChange = { inputScope = it },
                         label = { Text("Client Scope") },
                         modifier = Modifier.padding(32.dp, 12.dp, 32.dp, 0.dp).fillMaxWidth(),
-                        colors = TextFieldDefaults.textFieldColors(textColor = Color.White)
+                        colors = TextFieldDefaults.textFieldColors(textColor = Color.White),
+                        singleLine = true
                     )
 
                     Text(authServerInfo, modifier = Modifier.padding(32.dp, 12.dp, 32.dp, 0.dp), color = Color.White)
@@ -167,7 +194,8 @@ fun App() {
                         onValueChange = { authServer = it },
                         label = { Text("Auth Server URL") },
                         modifier = Modifier.padding(32.dp, 12.dp, 32.dp, 0.dp).fillMaxWidth(),
-                        colors = TextFieldDefaults.textFieldColors(textColor = Color.White)
+                        colors = TextFieldDefaults.textFieldColors(textColor = Color.White),
+                        singleLine = true
                     )
 
                     Text(
@@ -180,7 +208,8 @@ fun App() {
                         onValueChange = { inputEndpoint = it },
                         label = { Text("Endpoint") },
                         modifier = Modifier.padding(32.dp, 12.dp, 32.dp, 0.dp).fillMaxWidth(),
-                        colors = TextFieldDefaults.textFieldColors(textColor = Color.White)
+                        colors = TextFieldDefaults.textFieldColors(textColor = Color.White),
+                        singleLine = true
                     )
 
                     Row(modifier = Modifier.padding(32.dp, 12.dp, 32.dp, 0.dp)) {
@@ -269,19 +298,12 @@ fun App() {
                         onClick = { offset ->
                             annotatedString.getStringAnnotations(tag = "URL", start = offset, end = offset)
                                 .firstOrNull()?.let {
-                                Desktop.getDesktop().browse(URI(it.item))
-                            }
+                                    Desktop.getDesktop().browse(URI(it.item))
+                                }
                         },
                         style = TextStyle(color = Color.Gray, fontSize = 1.em),
                         modifier = Modifier.align(Alignment.CenterHorizontally).padding(0.dp, 0.dp, 0.dp, 12.dp)
                     )
-
-                    /*Text(
-                        authorNote,
-                        color = Color.Gray,
-                        fontSize = 1.em,
-                        modifier = Modifier.align(Alignment.CenterHorizontally).padding(0.dp, 0.dp, 0.dp, 12.dp)
-                    )*/
                 }
             }
 
@@ -289,6 +311,10 @@ fun App() {
     }
 }
 
+/**
+ * This is the main function of the application.
+ * It sets up the window and calls the main Composable function.
+ */
 fun main() = application {
 
     val screenHeight = Toolkit.getDefaultToolkit().screenSize.height
@@ -301,8 +327,13 @@ fun main() = application {
     ) {
         App()
     }
+
 }
 
+/**
+ * This function orchestrates the API call.
+ * It first gets the access token, then authenticates the client, and finally calls the endpoint.
+ */
 fun callStack(
     clientId: String,
     clientSecret: String,
@@ -311,20 +342,29 @@ fun callStack(
     endpoint: String,
     selectedMethod: String
 ): String {
+
     val base64 = getAccessToken(clientId, clientSecret)
     val token = authenticateClient(authServer, base64, scope)
     return callEndpoint(endpoint, token, selectedMethod)
+
 }
 
+/**
+ * This function gets the access token for the client.
+ * It encodes the client ID and secret in Base64.
+ */
 fun getAccessToken(clientId: String, clientSecret: String): String {
 
     val credentials = "$clientId:$clientSecret"
     val encodedCredentials = Base64.getEncoder().encodeToString(credentials.toByteArray())
 
     return encodedCredentials.trim()
-
 }
 
+/**
+ * This function authenticates the client.
+ * It sends a POST request to the auth server with the Base64-encoded credentials and scope.
+ */
 fun authenticateClient(authServer: String, base64: String, scope: String): String {
 
     val command = listOf(
@@ -337,21 +377,20 @@ fun authenticateClient(authServer: String, base64: String, scope: String): Strin
         "-d", "grant_type=client_credentials&scope=$scope"
     )
 
-    val process = ProcessBuilder(command).start()
-    val reader = BufferedReader(InputStreamReader(process.inputStream))
-    val output = reader.readText()
+    val output = ProcessBuilder(command).start().inputStream.bufferedReader().readText()
 
-    process.waitFor()
-
-    val jsonResponse = JSONObject(output)
-    val token = jsonResponse.getString("access_token")
-
+    val token = JSONObject(output).getString("access_token")
     return token.toString()
 
 }
 
+/**
+ * This function calls the API endpoint.
+ * It sends a request to the endpoint with the given method and the bearer token.
+ */
 @Suppress("IMPLICIT_CAST_TO_ANY")
 fun callEndpoint(endpoint: String, token: String, selectedMethod: String): String {
+
     val command = listOf(
         "curl",
         "-X",
@@ -361,12 +400,7 @@ fun callEndpoint(endpoint: String, token: String, selectedMethod: String): Strin
         "-H", "authorization: Bearer $token"
     )
 
-    val process = ProcessBuilder(command).start()
-    val reader = BufferedReader(InputStreamReader(process.inputStream))
-    val output = reader.readText()
-
-    process.waitFor()
-
+    val output = ProcessBuilder(command).start().inputStream.bufferedReader().readText()
 
     val jsonElement = when {
         output.startsWith("[") -> JSONArray(output.trim())
@@ -374,19 +408,10 @@ fun callEndpoint(endpoint: String, token: String, selectedMethod: String): Strin
         else -> "Not a JSON Response"
     }
 
-    val jsonResponse = when (jsonElement) {
-        is JSONArray -> {
-            jsonElement.toString(4)
-        }
-
-        is JSONObject -> {
-            jsonElement.toString(4)
-        }
-
-        else -> {
-            "Not a JSON Response"
-        }
+    return when (jsonElement) {
+        is JSONArray -> jsonElement.toString(4)
+        is JSONObject -> jsonElement.toString(4)
+        else -> "Not a JSON Response"
     }
 
-    return jsonResponse
 }

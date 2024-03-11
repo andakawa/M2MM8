@@ -6,11 +6,12 @@ plugins {
 }
 
 group = "io.github.andakawa"
-version = "1.0-SNAPSHOT"
+version = "1.1.0-SNAPSHOT"
 
 repositories {
     mavenCentral()
     maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
+    google()
 }
 
 dependencies {
@@ -21,6 +22,8 @@ dependencies {
     implementation(compose.desktop.currentOs)
     implementation("net.minidev:json-smart:2.5.0")
     implementation("org.json:json:20240303")
+    implementation("org.jetbrains.compose.material:material-icons-extended-desktop:1.6.0")
+    runtimeOnly("org.jetbrains.compose.material:material-icons-extended-desktop:1.6.0")
 }
 
 compose.desktop {
@@ -30,7 +33,7 @@ compose.desktop {
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
             packageName = "M2MM8"
-            packageVersion = "1.0.0"
+            packageVersion = "1.1.0"
         }
     }
 }
